@@ -1,1 +1,86 @@
+name: RHEL Packer
+# Only triggers the GHA ifa push happened to the main branch and to the path images/rhel
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'images/RHEL/**'
+  workflow_dispatch:
+    inputs:
+      var-file-prefix:
+        description: 'Prefix for the variable file'
+        required: true
+        type: choice
+        default: 'Dev'
+        options:
+          - 'Dev'
+          - 'Stage'
+          - 'Prod'
+      build-template:
+        description: 'Build template'
+        required: true
+        type: string
+        default: 'prime_rhel.pkr.hcl'
 
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  packer:
+    name: 'RHEL Packer'
+    runs-on: [docker]
+# the above line instructing GHA to run on a self-hosted runner with a label packer-poc
+    
+#This step will clone the repo temporarily into the runner VM    
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Authenticate to Google Cloud (Keyless)
+      uses: 'google-github-actions/auth@v2'
+      with:
+        workload_identity_provider: projects/584369730819/locations/global/workloadIdentityPools/github-pool/providers/github-identity-provider
+        service_account: svc-nonprod-github-cicd@prj-ss-prod-devops-0f8c.iam.gserviceaccount.com
+        access_token_lifetime: 300s
+
+    - name: Setup Gcloud
+      uses: google-github-actions/setup-gcloud@v2
+      
+    - name: Setup `packer`
+      uses: hashicorp/setup-packer@v3
+      id: setup
+      with:
+        version: ${{ env.PRODUCT_VERSION }}
+
+    - name: Install plugins
+      run: "packer plugins install github.com/hashicorp/googlecompute"
+
+    - name: Run `packer init`
+      id: init
+      run: "packer init ${{ inputs.build-template || 'prime_rhel.pkr.hcl' }}"
+
+    - name: Run `packer validate`
+      # continue-on-error: true
+      id: validate
+      run: "packer validate -var-file=images/RHEL/${{ inputs.var-file-prefix || 'Dev' }}.pkrvars.json ${{ inputs.build-template || 'prime_rhel.pkr.hcl' }}"
+
+    - name: Run Packer
+      run: "packer build -var-file=images/RHEL/${{ inputs.var-file-prefix || 'Dev' }}.pkrvars.json ${{ inputs.build-template || 'prime_rhel.pkr.hcl' }}"
+      env: 
+        PKR_VAR_qualys_agent_activation_id: ${{ secrets.QUALYS_AGENT_ACTIVATION_ID }}
+        PKR_VAR_qualys_agent_customer_id: ${{ secrets.QUALYS_AGENT_CUSTOMER_ID }}
+        PKR_VAR_qualys_agent_server_uri: ${{ secrets.QUALYS_AGENT_SERVER_URI }}
+        PKR_VAR_sentinelone_agent_token: ${{ secrets.SENTINELONE_AGENT_TOKEN}}
+        PKR_VAR_dynatrace_reg_token: ${{ secrets.DYNATRACE_REG_TOKEN }}
+    
+    - name: Create a Validation VM
+      run: |
+          echo "Executing VM Creation Script..."
+          chmod +x ./scripts/create_validation_vm.sh
+          ./scripts/create_validation_vm.sh
+      env:
+        SSH_PUBLIC_KEY_STRING: ${{ secrets.POC_SSH_PUBLIC_KEY }}
