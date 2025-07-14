@@ -1,0 +1,80 @@
+receivers:
+  filelog:
+    include: [ /var/log/demo-app/*.log ]
+    start_at: beginning
+    operators:
+      - type: json_parser
+        id: parser
+        parse_from: body
+
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk:
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      load:
+      network:
+      system:
+      processes:
+      process:
+        metrics:
+          process.cpu.utilization:
+            enabled: true
+          process.disk.operations:
+            enabled: true
+          process.memory.utilization:
+            enabled: true
+          process.uptime:
+            enabled: true
+
+
+processors:
+  batch:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 100
+  resource/add_host_metadata:
+    attributes:
+      - key: environment
+        value: dev
+        action: insert
+      - key: host.id
+        value: otel-demo-rhel9
+        action: insert
+      - key: service.name
+        value: demo-rhel9
+        action: insert
+      - key: service.instance.id
+        value: XXXX
+        action: insert
+      - key: host.name
+        value: rhel9-otel
+        action: insert
+
+exporters:
+  otlphttp:
+    endpoint: "https://flu19434.live.dynatrace.com/api/v2/otlp"
+    headers:
+      Authorization: "Api-Token ${OTEL_API_TOKEN}"
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp]
+    metrics:
+      receivers: [hostmetrics]
+      processors: [resource/add_host_metadata]
+      exporters: [otlphttp]
