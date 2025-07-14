@@ -103,7 +103,7 @@ source "googlecompute" "gcp_rhel" {
   image_description       = local.image_description
   image_storage_locations = [var.region]
   machine_type            = var.machine_type
-  service_account_email   = var.compute_engine_sva
+  service_account_email   = var.serviceAccount
   scopes                  = ["https://www.googleapis.com/auth/cloud-platform"]
   omit_external_ip        = true
   use_internal_ip         = true
