@@ -1,1 +1,11 @@
-
+{
+  "project_id": "xxxxx",
+  "region": "",
+  "zone": "",
+  "network": "",
+  "subnetwork": "",
+  "machine_type": "e2-medium",
+  "serviceAccount": "",
+  "source_image_name": "rhel-9-xxxxxx",
+  "image_name": "rhel-9-hgi"
+}
