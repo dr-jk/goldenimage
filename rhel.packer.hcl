@@ -116,14 +116,14 @@ source "googlecompute" "gcp_rhel" {
 }
 
 build {
-  sources = ["xxxx"]
+  sources = ["source "googlecompute" "gcp_rhel"]
   
   provisioner "file" {
-    source       = "xxxx"
-    destination = "xxxx"
+    source       = "config.yaml.template"
+    destination = "/tmp/config.yaml.template"
   }
   provisioner "shell" {
-    script       = "xxxxx"
+    script       = "images/scripts/script.sh"
     pause_before = "10s"
     timeout      = "300s"
     environment_vars = [
@@ -136,7 +136,7 @@ build {
     ]
   }
   provisioner "shell" {
-    script       = "xxxxx"
+    script       = "/images/rhel/scripts/cis-harden.sh"
     pause_before = "10s"
     timeout      = "300s"
   }
