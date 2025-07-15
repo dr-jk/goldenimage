@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'images/RHEL/**'
+      - 'images/rhel/**'
   workflow_dispatch:
     inputs:
       var-file-prefix:
@@ -15,6 +15,7 @@ on:
         default: 'Dev'
         options:
           - 'Dev'
+          - 'Uat'
           - 'Stage'
           - 'Prod'
       build-template:
@@ -43,8 +44,8 @@ jobs:
     - name: Authenticate to Google Cloud (Keyless)
       uses: 'google-github-actions/auth@v2'
       with:
-        workload_identity_provider: projects/584369730819/locations/global/workloadIdentityPools/github-pool/providers/github-identity-provider
-        service_account: svc-nonprod-github-cicd@prj-ss-prod-devops-0f8c.iam.gserviceaccount.com
+        workload_identity_provider: projects/[prject-number]/locations/global/workloadIdentityPools/github-pool/providers/github-identity-provider
+        service_account: <serviceAccount>@<prject Id>.iam.gserviceaccount.com
         access_token_lifetime: 300s
 
     - name: Setup Gcloud
@@ -61,15 +62,15 @@ jobs:
 
     - name: Run `packer init`
       id: init
-      run: "packer init ${{ inputs.build-template || 'prime_rhel.pkr.hcl' }}"
+      run: "packer init ${{ inputs.build-template || 'rhel.packer.hcl' }}"
 
     - name: Run `packer validate`
       # continue-on-error: true
       id: validate
-      run: "packer validate -var-file=images/RHEL/${{ inputs.var-file-prefix || 'Dev' }}.pkrvars.json ${{ inputs.build-template || 'prime_rhel.pkr.hcl' }}"
+      run: "packer validate -var-file=images/rhel/${{ inputs.var-file-prefix || 'Dev' }}.pkvars.json ${{ inputs.build-template || 'rhel.packer.hcl' }}"
 
     - name: Run Packer
-      run: "packer build -var-file=images/RHEL/${{ inputs.var-file-prefix || 'Dev' }}.pkrvars.json ${{ inputs.build-template || 'prime_rhel.pkr.hcl' }}"
+      run: "packer build -var-file=images/rhel/${{ inputs.var-file-prefix || 'Dev' }}.pkvars.json ${{ inputs.build-template || 'rhel.acpker.hcl' }}"
       env: 
         PKR_VAR_qualys_agent_activation_id: ${{ secrets.QUALYS_AGENT_ACTIVATION_ID }}
         PKR_VAR_qualys_agent_customer_id: ${{ secrets.QUALYS_AGENT_CUSTOMER_ID }}
