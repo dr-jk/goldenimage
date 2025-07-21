@@ -4,8 +4,8 @@ IMAGE_NAME_FILTER="rhel9-golden"
 VM_NAME="rhel9-golden-image-validation-vm-$(date +%s)"
 ZONE="us-central1-a"                          
 MACHINE_TYPE="e2-medium"                   
-PROJECT_ID="nonprod-prime-ss-compute"
-SUBNET_NAME="projects/prj-ss-non-prod-network-0f8c/regions/us-central1/subnetworks/sb-nonprod-network-usc1-computess"              
+PROJECT_ID="xxxx"
+SUBNET_NAME="projects/<PROJECT_ID>/regions/us-central1/subnetworks/<subnet_name>"              
 SSH_USER="poc" 
 
    # --- 1. Validate SSH Key String (passed as environment variable) ---
