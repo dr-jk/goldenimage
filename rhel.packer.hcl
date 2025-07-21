@@ -34,7 +34,7 @@ variable "machine_type" {
   description = "The GCP machine type to use"
 }
 
-variable "compute_engine_sva" {
+variable "serviceAccount" {
   type        = string
   description = "The service accoun to use on for the temporary VM.  This needs access to the Secret Manager and install media storage bucket"
 }
