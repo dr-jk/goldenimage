@@ -22,7 +22,7 @@ on:
         description: 'Build template'
         required: true
         type: string
-        default: 'prime_rhel.pkr.hcl'
+        default: 'rhel.packer.hcl'
 
 
 permissions:
