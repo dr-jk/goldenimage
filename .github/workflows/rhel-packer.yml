@@ -81,7 +81,7 @@ jobs:
     - name: Create a Validation VM
       run: |
           echo "Executing VM Creation Script..."
-          chmod +x ./scripts/create_validation_vm.sh
-          ./scripts/create_validation_vm.sh
+          chmod +x ./scripts/validation_vm.sh 
+          ./scripts/validation_vm.sh 
       env:
         SSH_PUBLIC_KEY_STRING: ${{ secrets.POC_SSH_PUBLIC_KEY }}
