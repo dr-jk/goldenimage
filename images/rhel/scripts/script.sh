@@ -8,10 +8,10 @@ set -e
 sudo dnf install -y dnf-utils #deprecated in RHEL9
 
 # Download Packages 
-curl -o wget.rpm https://repo.primetherapeutics.com/repository/raw-release/gce_golden_image/rhel9/wget/wget-1.21.1-8.el9.x86_64.rpm
-curl -o qualys.rpm https://repo.primetherapeutics.com/repository/raw-release/gce_golden_image/rhel9/qualys/QualysCloudAgent7.1.0.37.rpm
-curl -o sentinelone.rpm https://repo.primetherapeutics.com/repository/raw-release/gce_golden_image/rhel9/sentinelone/SentinelAgent_linux_x86_64_v24_3_3_6.rpm
-curl -o unzip.rpm https://repo.primetherapeutics.com/repository/raw-release/gce_golden_image/rhel9/unzip/unzip-6.0-58.el9.x86_64.rpm
+curl -o wget.rpm https://<path>/wget-1.21.1-8.el9.x86_64.rpm
+curl -o qualys.rpm https://<path>/QualysCloudAgent7.1.0.37.rpm
+curl -o sentinelone.rpm https://<path>/SentinelAgent_linux_x86_64_v24_3_3_6.rpm
+curl -o unzip.rpm https://<path>/unzip-6.0-58.el9.x86_64.rpm
 sudo yum install -y ./wget.rpm
 
 wget -O Dynatrace-OneAgent-Linux-x86-1.313.52.20250602-150703.sh "https://flu19434.live.dynatrace.com/api/v1/deployment/installer/agent/unix/default/latest?arch=x86" --header="Authorization: Api-Token ${DYNATRACE_REG_TOKEN}"
@@ -38,7 +38,7 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable dynatrace-hostname-reset.service
 # Set variables
-BUCKET_NAME="bkt-nonprod-prime-ss-compute-packages"
+BUCKET_NAME="bkt-goldenimage"
 PACKAGE_PATH="POC.zip"
 LOCAL_DIR="/tmp/packages"
 
@@ -90,14 +90,11 @@ cd $LOCAL_DIR/POC || {
   echo "Error changing directory to $LOCAL_DIR/POC";
   exit 1;
 }
-
-
-
 # Move the certificates to the appropriate directory
-sudo cp Prime_Therapeutics_Root_CA.cer /etc/pki/ca-trust/source/anchors/
-sudo cp Prime_Therapeutics_Issuing_CA.cer /etc/pki/ca-trust/source/anchors/
-sudo cp Prime_Therapeutics_Root_Certificate.cer /etc/pki/ca-trust/source/anchors/
-sudo cp Prime_Therapeutics_Issuing_Certificate.cer /etc/pki/ca-trust/source/anchors/
+sudo cp Root_CA.cer /etc/pki/ca-trust/source/anchors/
+sudo cp CA.cer /etc/pki/ca-trust/source/anchors/
+sudo cp Root_Certificate.cer /etc/pki/ca-trust/source/anchors/
+sudo cp Issuing_Certificate.cer /etc/pki/ca-trust/source/anchors/
 
 # Update the Certificates
 sudo update-ca-trust || {
@@ -120,8 +117,8 @@ sudo dnf install -y krb5-workstation krb5-libs sssd-proxy
 sudo dnf install -y rsyslog
 
 echo " - '# siem'" | sudo tee -a /etc/rsyslog.conf
-echo " - 'auth.info;authpriv.info;daemon.info;kern.info  @vwcribl.igtm.primetherapeutics.com:9516'" | sudo tee -a /etc/rsyslog.conf
-echo " - 'user.info;*.emerg;local4.info;local7.info      @vwcribl.igtm.primetherapeutics.com:9516'" | sudo tee -a /etc/rsyslog.conf
+echo " - 'auth.info;authpriv.info;daemon.info;kern.info  @<url_path>:9516'" | sudo tee -a /etc/rsyslog.conf
+echo " - 'user.info;*.emerg;local4.info;local7.info      @<url_path>:9516'" | sudo tee -a /etc/rsyslog.conf
 
 cat /etc/rsyslog.conf
 
@@ -131,29 +128,12 @@ sudo authselect select sssd --force
 # after reboot remove old kernel packages
 sudo dnf install -y dnf-plugins-core
 which package-cleanup
-# temporarily commenting remove old kernel packages as it is giving error will try manually in the VM 
-# sudo package-cleanup --oldkernels --count=1 -y
 
 # remove old kernel packages
 sudo dnf list installed kernel*
 sudo dnf remove --oldinstallonly --setopt installonly_limit=2 kernel -y
 echo "Finished cleanup old kernerls"
-sudo dnf list installed kernel*
-# chmod +x clean_old_kernerls.sh
-
-# Get the path of the clean old kernerls script
-#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Run clean_old_kernels.sh
-#bash "${SCRIPT_DIR}/clean_old_kernels.sh"
-#echo "Finished clean_old_kernels.sh"
-
-# Get the path of the cis hardening script
-#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Run rhel9-cis-hardening.sh
-#bash "${SCRIPT_DIR}/rhel9-cis-hardening.sh"
-#echo "Finished rhel9-cis-hardening.sh"
+sudo dnf list installed kernel* 
 
 # Clean up
 cd $LOCAL_DIR
